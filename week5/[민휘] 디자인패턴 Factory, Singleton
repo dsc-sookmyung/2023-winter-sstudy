@@ -1,0 +1,533 @@
+# Simple Factory
+
+## 핵심 의도
+
+객체 생성의 책임을 분리하자.
+
+## 적용 상황
+
+요구사항 변경에 의해 객체 생성에 필요한 코드가 자꾸 바뀌는 경우에 사용할 수 있다.
+객체 생성에 필요한 과정을 템플릿처럼 정해서 다른 책임들로부터 분리할 수 있다.
+
+## 솔루션의 구조와 각 요소의 역할
+
+
+객체를 생성하는 부분이 요구사항에 따라 바뀌는 부분이므로, 객체 생성 책임을 별도의 객체인 Factory에 할당한다.
+
+## 적용 예시
+
+### 요구사항
+
+피자 가게에서 주문 요청을 받으면 피자를 만들어 굽고 잘라서 박스에 넣으려고 한다.
+이때 피자의 종류는 세 가지이고, 피자의 종류는 문자열로 구분한다.
+
+### 설계
+
+피자 가게인 PizzaStore이 피자 생성과 주문 메시지를 받을 수 있다.
+이때 SimplePizzaFactory는 문자열에 따라 피자를 생성하는 책임을 구현한다.
+
+### 코드
+
+Pizza
+
+```Java
+abstract public class Pizza {
+	String name;
+	String dough;
+	String sauce;
+	List<String> toppings = new ArrayList<String>();
+
+	public String getName() {
+		return name;
+	}
+
+	public void prepare() {
+		System.out.println("Preparing " + name);
+	}
+
+	public void bake() {
+		System.out.println("Baking " + name);
+	}
+
+	public void cut() {
+		System.out.println("Cutting " + name);
+	}
+
+	public void box() {
+		System.out.println("Boxing " + name);
+	}
+
+}
+
+```
+
+CheesePizza
+
+```Java
+public class CheesePizza extends Pizza {
+	public CheesePizza() {
+		name = "Cheese Pizza";
+		dough = "Regular Crust";
+		sauce = "Marinara Pizza Sauce";
+		toppings.add("Fresh Mozzarella");
+		toppings.add("Parmesan");
+	}
+}
+
+```
+
+PizzaStore
+
+```Java
+public class PizzaStore {
+	SimplePizzaFactory factory;
+
+	public PizzaStore(SimplePizzaFactory factory) {
+		this.factory = factory;
+	}
+
+	public Pizza orderPizza(String type) {
+		Pizza pizza;
+
+		**pizza = factory.createPizza(type);**
+
+		pizza.prepare();
+		pizza.bake();
+		pizza.cut();
+		pizza.box();
+
+		return pizza;
+	}
+}
+
+```
+
+SimplePizzaFactory
+
+```Java
+public class SimplePizzaFactory {
+
+	public Pizza createPizza(String type) {
+		Pizza pizza = null;
+
+		if (type.equals("cheese")) {
+			pizza = new CheesePizza();
+		} else if (type.equals("pepperoni")) {
+			pizza = new PepperoniPizza();
+		} else if (type.equals("clam")) {
+			pizza = new ClamPizza();
+		} else if (type.equals("veggie")) {
+			pizza = new VeggiePizza();
+		}
+		return pizza;
+	}
+}
+
+```
+
+PizzaTest
+
+```Java
+public static void main(String[] args) {
+	SimplePizzaFactory factory = new SimplePizzaFactory();
+	PizzaStore store = new PizzaStore(factory);
+
+	Pizza pizza = store.orderPizza("cheese");
+	System.out.println("We ordered a " + pizza.getName() + "\\n");
+	System.out.println(pizza);
+
+	pizza = store.orderPizza("veggie");
+	System.out.println("We ordered a " + pizza.getName() + "\\n");
+	System.out.println(pizza);
+}
+
+```
+
+## 한계
+
+**여전히 OCP 원칙을 위반한다.**
+위의 피자 예시에서 하와이안 피자를 추가해달라는 요구사항이 생기면,
+SimpleFactory의 createPizza()의 분기 처리 코드를 수정해야 한다.
+
+# Factory Method
+
+## 핵심 의도
+
+팩토리 메소드 패턴은 객체를 생성할 때 필요한 인터페이스를 만든다. 어떤 클래스의 인스턴스를 만들지는 서브클래스에서 결정한다. 팩토리 메소드 패턴을 사용하면 클래스 인스턴스 만드는 일을 서브클래스에게 맡긴다.
+
+## 적용 상황
+
+팩토리로 생성해야 하는 객체가 여러 개로 늘어날 경우 사용한다. Simple Factory를 적용했을 때 지킬 수 없던 OCP를 지키면서 객체를 확장할 수 있다.
+
+## 솔루션의 구조와 각 요소의 역할
+
+![https://user-images.githubusercontent.com/53958188/212720205-f739f21c-6f35-451d-8645-b54288b964b0.png](https://user-images.githubusercontent.com/53958188/212720205-f739f21c-6f35-451d-8645-b54288b964b0.png)
+
+### 객체에게 책임을 분할하기
+
+제품을 사용하는 책임을 Creator에 할당한다. Creator는 내부에서 제품을 생성해야 하는데, 이 생성 부분은 바뀌는 부분이므로 책임을 분리하여 ConcreteCreator에게 할당한다. Creator는 제품 생성이 필요할 때마다 ConcreteCreator에게 메시지를 보낸다.
+
+### 구현 포인트
+
+팩토리 메소드에서 매개변수를 받아 ConcreteCreator에서 분기 처리하여 객체를 생성할 수 있다.
+하지만 매개변수를 쓰지 않고 그냥 한 가지 객체만 만드는 경우도 많다.
+
+객체를 new로 생성하지 않고는 자바 프로그램을 만들 수 없다.
+그래도 생성 코드를 한 곳에 모아 놓고 체계적으로 관리하면, 객체 생성 코드를 보호하고 관리할 수 있다.
+
+## 적용 예시
+
+### 요구사항
+
+뉴욕 스타일 피자를 파는 지점과 시카고 스타일 피자를 파는 지점을 추가했다. 각 지점은 동일하게 주문을 받지만, 만드는 피자의 종류가 다르다. NyStyleCheesePizza, NyStyleVeggiePizza, ChicagoStyleCheesePizza, ChicagoStyleClamPizza 등이 있다.
+이때 피자를 생성하는 부분을 팩토리 메소드 패턴으로 분리하려고 한다.
+
+### 설계
+
+![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/b6068ba2-d766-4415-8ccb-7f25f34baf04/Untitled.png)
+
+피자 객체를 사용하는 책임을 가진 PizzaStore 객체를 만든다.
+피자를 사용하는 메소드는 orderPizza() 뿐인데, 피자 생성 책임을 외부에서 요청한다.
+
+뉴욕 스타일 피자의 주문을 받는 NyPizzaStore과 시카고 스타일 피자의 주문을 받는 ChicagoPizzaStore를 만들었다.
+각 지점의 피자가게는 피자 생성 요청을 수신하는 책임을 가진다.
+
+### 코드
+
+PizzaStore
+
+```java
+public abstract class PizzaStore {
+
+	abstract Pizza createPizza(String item);
+
+	public Pizza orderPizza(String type) {
+		Pizza pizza = createPizza(type);
+		System.out.println("--- Making a " + pizza.getName() + " ---");
+		pizza.prepare();
+		pizza.bake();
+		pizza.cut();
+		pizza.box();
+		return pizza;
+	}
+}
+
+```
+
+NyStylePizzaStore
+
+```java
+public class NYPizzaStore extends PizzaStore {
+
+	Pizza createPizza(String item) {
+		if (item.equals("cheese")) {
+			return new NYStyleCheesePizza();
+		} else if (item.equals("veggie")) {
+			return new NYStyleVeggiePizza();
+		} else if (item.equals("clam")) {
+			return new NYStyleClamPizza();
+		} else if (item.equals("pepperoni")) {
+			return new NYStylePepperoniPizza();
+		} else return null;
+	}
+}
+
+```
+
+PizzaTest
+
+```java
+public class PizzaTestDrive {
+
+	public static void main(String[] args) {
+		PizzaStore nyStore = new NYPizzaStore();
+		PizzaStore chicagoStore = new ChicagoPizzaStore();
+
+		Pizza pizza = nyStore.orderPizza("cheese");
+		System.out.println("Ethan ordered a " + pizza.getName() + "\\n");
+
+		pizza = chicagoStore.orderPizza("cheese");
+		System.out.println("Joel ordered a " + pizza.getName() + "\\n");
+
+		pizza = nyStore.orderPizza("clam");
+		System.out.println("Ethan ordered a " + pizza.getName() + "\\n");
+
+		pizza = chicagoStore.orderPizza("clam");
+		System.out.println("Joel ordered a " + pizza.getName() + "\\n");
+
+		pizza = nyStore.orderPizza("pepperoni");
+		System.out.println("Ethan ordered a " + pizza.getName() + "\\n");
+
+		pizza = chicagoStore.orderPizza("pepperoni");
+		System.out.println("Joel ordered a " + pizza.getName() + "\\n");
+
+		pizza = nyStore.orderPizza("veggie");
+		System.out.println("Ethan ordered a " + pizza.getName() + "\\n");
+
+		pizza = chicagoStore.orderPizza("veggie");
+		System.out.println("Joel ordered a " + pizza.getName() + "\\n");
+	}
+}
+
+```
+
+# Abstract Factory
+
+## 핵심 의도
+
+추상 팩토리 패턴은 구상 클래스에 의존하지 않고도 서로 연관되거나 의존적인 객체로 이루어진 제품군을 생산하는 인터페이스를 제공한다. 구상 클래스는 서브클래스에서 만든다.
+
+## 적용 상황
+
+연관된 객체들을 한번에 생성하는 책임을 캡슐화할 때 사용한다.
+
+## 솔루션의 구조와 각 요소의 역할
+
+![https://refactoring.guru/images/patterns/diagrams/abstract-factory/structure-2x.png](https://refactoring.guru/images/patterns/diagrams/abstract-factory/structure-2x.png)
+
+### 객체에게 책임을 분할하기
+
+제품군을 생성하는 책임과 사용하는 책임을 할당해야 한다. 여기서 제품군 생성은 ConcreateFactory가, 제품군의 사용은 Client가 한다.
+
+### 구현 포인트
+
+추상 팩토리 패턴은 객체의 구성 방식, 팩토리 메소드 패턴은 상속으로 객체를 생성한다.
+
+## 적용 예시
+
+### 요구사항
+
+지점별 피자가게에서 특정 지역별 재료만을 사용할 수 있도록 피자를 생성한다. 이때 재료들을 제품군으로 볼 수 있다.
+
+### 설계
+
+![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/2e9c9670-ca9b-4d4d-b0b4-2bf502515d22/Untitled.png)
+
+우선 제품군을 인터페이스와 구현체로 분리하여 생성한다. 그리고 제품군을 생성하는 책임을 PizzaIngredientFactory에 할당하고, NYPizzaIngredientFactory와 ChicagoPizzaIngredientFactory에서 재료들을 선택한다. 그리고 이렇게 생성된 재료들을 NYPizzaStore과 ChicagoPizzaStore에서 사용한다.
+
+### 코드
+
+PizzaIngredientFactory
+
+```java
+public interface PizzaIngredientFactory {
+
+	public Dough createDough();
+	public Sauce createSauce();
+	public Cheese createCheese();
+	public Veggies[] createVeggies();
+	public Pepperoni createPepperoni();
+	public Clams createClam();
+
+}
+
+```
+
+NYPizzaIngredientFactory
+
+```java
+public class NYPizzaIngredientFactory implements PizzaIngredientFactory {
+
+	public Dough createDough() {
+		return new ThinCrustDough();
+	}
+
+	public Sauce createSauce() {
+		return new MarinaraSauce();
+	}
+
+	public Cheese createCheese() {
+		return new ReggianoCheese();
+	}
+
+	public Veggies[] createVeggies() {
+		Veggies veggies[] = { new Garlic(), new Onion(), new Mushroom(), new RedPepper() };
+		return veggies;
+	}
+
+	public Pepperoni createPepperoni() {
+		return new SlicedPepperoni();
+	}
+
+	public Clams createClam() {
+		return new FreshClams();
+	}
+}
+
+```
+
+NYPizzaStore
+
+```java
+public class NYPizzaStore extends PizzaStore {
+
+	protected Pizza createPizza(String item) {
+		Pizza pizza = null;
+		PizzaIngredientFactory ingredientFactory =
+			new NYPizzaIngredientFactory();
+
+		if (item.equals("cheese")) {
+
+			pizza = new CheesePizza(ingredientFactory);
+			pizza.setName("New York Style Cheese Pizza");
+
+		} else if (item.equals("veggie")) {
+
+			pizza = new VeggiePizza(ingredientFactory);
+			pizza.setName("New York Style Veggie Pizza");
+
+		} else if (item.equals("clam")) {
+
+			pizza = new ClamPizza(ingredientFactory);
+			pizza.setName("New York Style Clam Pizza");
+
+		} else if (item.equals("pepperoni")) {
+
+			pizza = new PepperoniPizza(ingredientFactory);
+			pizza.setName("New York Style Pepperoni Pizza");
+
+		}
+		return pizza;
+	}
+}
+
+```
+
+PizzaTest
+
+```java
+public static void main(String[] args) {
+	PizzaStore nyStore = new NYPizzaStore();
+	PizzaStore chicagoStore = new ChicagoPizzaStore();
+
+	Pizza pizza = nyStore.orderPizza("cheese");
+	System.out.println("Ethan ordered a " + pizza + "\\n");
+ }
+
+```
+
+# Singleton
+
+## 핵심 의도
+
+싱글턴 패턴은 클래스 인스턴스를 하나만 만들고, 그 인스턴스로의 전역 접근을 제공한다.
+
+## 적용 상황
+
+프로그램이 실행될 때 인스턴스를 하나만 만드는 것이 더 안전하거나 경제적인 경우 사용한다. 예를 들어 스레드 풀이나 커넥션 풀, 캐시, 대화상자, 설정, 로그, 디바이스 드라이버 등이 있다. 또한 하나만 존재해야하는 객체의 생성 비용이 큰 경우 지연생성 방식으로 필요할 때 인스턴스를 생성하는 상황에 적합하다.
+
+## 솔루션의 구조와 각 요소의 역할
+
+![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/6db9f2ed-4475-419d-9242-c596541483e5/Untitled.png)
+
+### 객체에게 책임을 분할하기
+
+객체는 원래 맡은 책임과 함께 자신이 하나만 존재하도록 관리하고 생성하는 책임을 담당한다. 따라서 싱글톤 객체는 외부로부터 생성 요청을 받아서 자신의 인스턴스를 생성한다. 싱글톤 객체는 자신만 접근할 수 있는 private 생성자를 가지고, 외부로부터 생성 요청을 받는 public 메소드를 가진다.
+
+### 구현 포인트
+
+실행 중에 인스턴스를 하나만 존재하도록 보장하는 것이 생각보다 어렵다. 멀티스레드, 직렬화, 리플렉션 등의 변수 가능성이 있기 때문이다. 그래서 싱글톤을 구현하는 방법이 여러개다. 상황에 맞게 골라서 사용하면 된다.
+
+### 방법1. private 생성자와 public 게터
+
+```java
+public class Singleton {
+    private static Singleton self = null;
+
+    private Singleton() {}
+
+    public static synchronized Singleton getInstance() {
+        if(self == null) {
+            self = new Singleton();
+        }
+        return self;
+    }
+
+    public void say() {
+        System.out.println("I am the only one..");
+    }
+}
+```
+
+- 장점 : 멀티스레드 환경에서 인스턴스가 중복 생성되는 문제를 막을 수 있다,
+- 단점 : 동기화를 사용하면 인스턴스를 생성하는 동안은 다른 명령이 실행되지 않는다. 만약 getInstance()가 애플리케이션에서 다른 명령들과 함께 자주 실행된다면 성능 저하의 문제가 있다.
+
+### 방법2. 인스턴스가 필요할 때 생성하지 말고 처음부터 만들기
+
+```java
+public class Singleton2 {
+    private static Singleton2 uniqueInstance = new Singleton2();
+
+    private Singleton2() {}
+
+    public static Singleton2 getInstance() {
+        return uniqueInstance;
+    }
+
+    public void say() {
+        System.out.println("I am the only one..");
+    }
+}
+```
+
+- 장점 : 정적 초기화 부분에서 인스턴스를 생성하므로 실행 중에 관리할 필요가 없다.
+- 단점 : 지연 생성을 사용할 수 없다. 싱글톤 인스턴스 생성 비용이 큰 경우, 프로그램 시작까지 시간이 오래 걸린다.
+
+### 방법3. DCL
+
+```java
+public class Singleton3 {
+    private volatile static Singleton3 uniqueInstance;
+
+    private Singleton3() {}
+
+    public static Singleton3 getInstance() {
+        if(uniqueInstance == null) {
+            synchronized (Singleton3.class) {
+                if(uniqueInstance == null) {
+                    uniqueInstance = new Singleton3();
+                }
+            }
+        }
+        return uniqueInstance;
+    }
+
+}
+```
+
+- 장점 : 지연 생성이 가능하고 속도를 크게 줄일 수 있다.
+- 단점 : voilatile은 자바 5보다 낮은 버전의 JVM에서는 동작하지 않는다.
+
+### 방법4. enum 사용하기
+
+멀티 스레드에서 발생하는 중복 생성 문제는 위의 방법들로 해결할 수 있다.
+
+하지만 역직렬화 과정에서 발생하는 중복 생성은 모든 필드를 transient로 선언하고, readResolve 메소드를 추가해야한다. 게다가 리플렉션으로 private 생성자를 조작해서 사용하면 싱글톤이 깨진다.
+
+```java
+public enum SingletonEnum {
+    UNIQUE_INSTANCE;
+
+    public void say() {
+        System.out.println("I am the only one..");
+    }
+}
+
+public class SingletonClient {
+    public static void main(String[] args) {
+        SingletonEnum singleton1 = SingletonEnum.UNIQUE_INSTANCE;
+        singleton1.say();
+
+        SingletonEnum singleton2 = SingletonEnum.UNIQUE_INSTANCE;
+        singleton2.say();
+
+        System.out.println(singleton1 == singleton2);
+    }
+}
+```
+
+**왜 enum인가?**
+
+enum은 클래스처럼 메소드, 생성자를 모두 가질 수 있으며 private 생성자를 가진다. enum은 고정된 상수들의 집합이므로 런타임이 아닌 컴파일 타임에 모든 값을 알고 있어야 한다. 컴파일 타임에 인스턴스가 생성되고 나면 enum 클래스 내에서도 인스턴스 생성이 불가능하다. 따라서 직렬화와 역직렬화의 중복 생성을 방지할 수 있다. 리플렉션의 경우 생성자 코드를 가져오는 단계에서 enum의 생성자 코드를 얻을 수 없으므로 중복 생성을 방지할 수 있다.
+
+enum을 사용한 싱글톤은 동기화, 클래스 로딩, 리플렉션, 직렬화와 역직렬화 문제를 해결할 수 있다. 자바에서 싱글톤을 생성하는 가장 완벽한 방법이다.
