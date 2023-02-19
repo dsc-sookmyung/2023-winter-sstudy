@@ -1,77 +1,5 @@
 "핸즈온 머신러닝"의 "11장 심층 신경망 훈련하기" 파트를 읽고 공부한 내용을 정리해보았다. 사전훈련된 층을 재사용하는 전이 학습에 대해 다뤄볼 것이다.<br>
 
-<head>
-  <style>
-    table.dataframe {
-      white-space: normal;
-      width: 100%;
-      height: 240px;
-      display: block;
-      overflow: auto;
-      font-family: Arial, sans-serif;
-      font-size: 0.9rem;
-      line-height: 20px;
-      text-align: center;
-      border: 0px !important;
-    }
-
-    table.dataframe th {
-      text-align: center;
-      font-weight: bold;
-      padding: 8px;
-    }
-
-    table.dataframe td {
-      text-align: center;
-      padding: 8px;
-    }
-
-    table.dataframe tr:hover {
-      background: #b8d1f3; 
-    }
-
-    .output_prompt {
-      overflow: auto;
-      font-size: 0.9rem;
-      line-height: 1.45;
-      border-radius: 0.3rem;
-      -webkit-overflow-scrolling: touch;
-      padding: 0.8rem;
-      margin-top: 0;
-      margin-bottom: 15px;
-      font: 1rem Consolas, "Liberation Mono", Menlo, Courier, monospace;
-      color: $code-text-color;
-      border: solid 1px $border-color;
-      border-radius: 0.3rem;
-      word-break: normal;
-      white-space: pre;
-    }
-
-  .dataframe tbody tr th:only-of-type {
-      vertical-align: middle;
-  }
-
-  .dataframe tbody tr th {
-      vertical-align: top;
-  }
-
-  .dataframe thead th {
-      text-align: center !important;
-      padding: 8px;
-  }
-
-  .page__content p {
-      margin: 0 0 0px !important;
-  }
-
-  .page__content p > strong {
-    font-size: 0.8rem !important;
-  }
-
-  </style>
-</head>
-
-
 ## 11.2 사전훈련된 층 재사용하기  
 
 **전이 학습(transfer learning)**  
@@ -323,10 +251,3 @@ ex) 얼굴 인식하는 시스템을 만들 때, 각 개인의 얼굴 사진을 
 이 신경망은 얼굴의 특성을 잘 감지하도록 학습된 신경망이다.  
 
 => 이 신경망의 하위층을 재사용해서 적은 양의 훈련 데이터에 얼굴을 잘 구분하는 분류기를 훈련할 수 있을 것이다.
-
-
-
-<br>
-<br>
-
-지금까지 기존에 존재하는 신경망의 하위층을 재사용하는 전이 학습에 대해 알아보았다. 다음 포스트에서는 고속 옵티마이저에 대해 다뤄볼 것이다.
